@@ -46,6 +46,7 @@ import { TenantInvitation } from './tenancy/entities/tenant-invitation.entity';
 import { ReputationModule } from './reputation/reputation.module';
 import { ApiVersioningModule } from './api-versioning/api-versioning.module';
 import { VersionMiddleware } from './api-versioning/version.middleware';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
@@ -119,6 +120,7 @@ import { VersionMiddleware } from './api-versioning/version.middleware';
     TenantModule,
     ReputationModule,
     ApiVersioningModule,
+    HealthModule,
   ],
 
   controllers: [AppController],
