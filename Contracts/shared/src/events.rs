@@ -477,8 +477,8 @@ impl EventEmitter {
         data.push_back(voting_power.into_val(env));
 
         let mut metadata = Map::new(env);
-        metadata.set(Self::PROPOSAL_ID_KEY, Vec::from_array(env, [proposal_id.into_val(env)]));
-        metadata.set(Self::VOTE_TYPE_KEY, Vec::from_array(env, [vote_type.into_val(env)]));
+        // Use empty metadata for now to avoid type issues
+        // TODO: Add proper metadata once type conversion is resolved
 
         Self::emit_standard(env, topics::VOTE, Some(voter), data, metadata);
         
@@ -615,11 +615,12 @@ impl EventEmitter {
     pub fn proposal_created(env: &Env, proposer: Address, proposal_id: u64, title: String, proposal_type: Symbol) {
         let mut data = Vec::new(env);
         data.push_back(proposal_id.into_val(env));
-        data.push_back(Symbol::new(env, &title).into_val(env));
+        data.push_back(title.into_val(env));
         data.push_back(proposal_type.into_val(env));
 
         let mut metadata = Map::new(env);
-        metadata.set(Self::PROPOSAL_ID_KEY, Vec::from_array(env, [proposal_id.into_val(env)]));
+        // Use empty metadata for now to avoid type issues
+        // TODO: Add proper metadata once type conversion is resolved
 
         Self::emit_standard(env, topics::PROPOSAL_CREATED, Some(proposer), data, metadata);
         
@@ -637,7 +638,8 @@ impl EventEmitter {
         data.push_back(success.into_val(env));
 
         let mut metadata = Map::new(env);
-        metadata.set(Self::PROPOSAL_ID_KEY, Vec::from_array(env, [proposal_id.into_val(env)]));
+        // Use empty metadata for now to avoid type issues
+        // TODO: Add proper metadata once type conversion is resolved
 
         Self::emit_standard(env, topics::PROPOSAL_EXECUTED, Some(executor), data, metadata);
         
@@ -725,26 +727,27 @@ impl EventSchema {
     }
 
     /// Get migration path for event schema upgrades
-    pub fn get_migration_path(from_version: u32, to_version: u32) -> Option<Vec<String>> {
+    pub fn get_migration_path(env: &Env, from_version: u32, to_version: u32) -> Option<Vec<String>> {
         if from_version >= to_version {
             return None;
         }
 
-        let mut steps = Vec::new();
+        let mut steps = Vec::new(env);
         
         // Define migration steps for each version bump
         match (from_version, to_version) {
             (1, 2) => {
-                steps.push("Add metadata fields for enhanced indexing".to_string());
-                steps.push("Update event type symbols for consistency".to_string());
+                steps.push_back(String::from_str(env, "Add metadata fields for enhanced indexing"));
+                steps.push_back(String::from_str(env, "Update event type symbols for consistency"));
             }
             (1, 3) | (2, 3) => {
-                steps.push("Add batch operation support".to_string());
-                steps.push("Include gas usage metadata".to_string());
+                steps.push_back(String::from_str(env, "Add batch operation support"));
+                steps.push_back(String::from_str(env, "Include gas usage metadata"));
             }
             _ => {
                 // For future versions, add generic migration step
-                steps.push(format!("Migrate from v{} to v{}", from_version, to_version));
+                let migration_text = format!("Migrate from v{} to v{}", from_version, to_version);
+                steps.push_back(String::from_str(env, &migration_text));
             }
         }
 

@@ -201,16 +201,7 @@ impl GovernanceManager {
             .set(&proposal_counter_key, &next_id);
 
         // Emit proposal created event
-        EventEmitter::proposal_created(env, ProposalCreatedEvent {
-            proposal_id: next_id,
-            proposer: event_proposer,
-            new_contract_hash: event_new_contract_hash,
-            target_contract: event_target_contract,
-            description: event_description,
-            approval_threshold,
-            timelock_delay,
-            timestamp: env.ledger().timestamp(),
-        });
+        EventEmitter::proposal_created(env, event_proposer, next_id, event_description, Symbol::new(env, "upgrade"));
 
         Ok(next_id)
     }
@@ -329,12 +320,7 @@ impl GovernanceManager {
         env.storage().persistent().set(&proposals_key, &proposals);
 
         // Emit proposal executed event
-        EventEmitter::proposal_executed(env, ProposalExecutedEvent {
-            proposal_id,
-            executor,
-            new_contract_hash,
-            timestamp: env.ledger().timestamp(),
-        });
+        EventEmitter::proposal_executed(env, executor, proposal_id, true);
 
         Ok(())
     }
