@@ -40,7 +40,8 @@ import { TenantConfig } from './tenancy/entities/tenant-config.entity';
 import { TenantUsage } from './tenancy/entities/tenant-usage.entity';
 import { TenantInvitation } from './tenancy/entities/tenant-invitation.entity';
 import { ReputationModule } from './reputation/reputation.module';
-
+import { ApiVersioningModule } from './api-versioning/api-versioning.module';
+import { VersionMiddleware } from './api-versioning/version.middleware';
 
 @Module({
   imports: [
@@ -106,6 +107,7 @@ import { ReputationModule } from './reputation/reputation.module';
     ThrottleModule,
     TenantModule,
     ReputationModule,
+    ApiVersioningModule,
   ],
 
   controllers: [AppController],
@@ -126,6 +128,8 @@ import { ReputationModule } from './reputation/reputation.module';
       provide: Logger,
       useClass: StructuredLogger,
     },
+    // Add version middleware globally
+    VersionMiddleware,
   ],
 })
 export class AppModule {}
