@@ -1,5 +1,6 @@
 use soroban_sdk::{
     Address, Env, Map, Symbol, Vec, IntoVal, TryFromVal,
+    contracttype, contractimpl, contracterror, contractevent
 };
 use crate::events::{ProposalCreatedEvent, ProposalExecutedEvent};
 use crate::events::EventEmitter;
