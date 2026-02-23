@@ -4,6 +4,8 @@ use soroban_sdk::{
     contract, contractimpl, Address, Env, Error, IntoVal, String, Symbol, Val, Vec,
 };
 
+use shared::events::{EventEmitter, TransferEvent, ApprovalEvent, MintEvent, BurnEvent};
+
 mod admin;
 mod storage;
 
@@ -46,10 +48,15 @@ impl TokenContract {
         };
         storage::set_allowance(&env, &from, &spender, &allowance);
 
-        env.events().publish(
-            (Symbol::new(&env, "approve"), from, spender),
-            (amount, expiration_ledger),
-        );
+        // Emit standardized approval event
+        EventEmitter::approval(&env, ApprovalEvent {
+            owner: from,
+            spender,
+            amount,
+            token: env.current_contract_address(),
+            expiration_ledger,
+            timestamp: env.ledger().timestamp(),
+        });
     }
 
     pub fn balance(env: Env, id: Address) -> i128 {
@@ -79,8 +86,6 @@ impl TokenContract {
         require_authorized(&env, &from);
 
         burn_balance(&env, &from, amount);
-        env.events()
-            .publish((Symbol::new(&env, "burn"), from), amount);
     }
 
     pub fn burn_from(env: Env, spender: Address, from: Address, amount: i128) {
@@ -90,8 +95,6 @@ impl TokenContract {
 
         spend_allowance(&env, &from, &spender, amount);
         burn_balance(&env, &from, amount);
-        env.events()
-            .publish((Symbol::new(&env, "burn"), from), amount);
     }
 
     pub fn decimals(env: Env) -> u32 {
@@ -146,10 +149,14 @@ impl TokenContract {
         let new_supply = supply.checked_add(amount).expect("Overflow");
         storage::set_total_supply(&env, new_supply);
 
-        env.events().publish(
-            (Symbol::new(&env, "mint"), storage::get_admin(&env), to),
+        // Emit standardized mint event
+        EventEmitter::mint(&env, MintEvent {
+            to,
             amount,
-        );
+            token: env.current_contract_address(),
+            total_supply: new_supply,
+            timestamp: env.ledger().timestamp(),
+        });
     }
 
     pub fn clawback(env: Env, from: Address, amount: i128) {
@@ -427,6 +434,15 @@ fn burn_balance(env: &Env, from: &Address, amount: i128) {
     let supply = storage::total_supply(env);
     let new_supply = supply.checked_sub(amount).expect("Overflow");
     storage::set_total_supply(env, new_supply);
+
+    // Emit standardized burn event
+    EventEmitter::burn(env, BurnEvent {
+        from: from.clone(),
+        amount,
+        token: env.current_contract_address(),
+        total_supply: new_supply,
+        timestamp: env.ledger().timestamp(),
+    });
 }
 
 fn internal_transfer(env: &Env, from: &Address, to: &Address, amount: i128) {
@@ -447,8 +463,14 @@ fn internal_transfer(env: &Env, from: &Address, to: &Address, amount: i128) {
     storage::set_balance(env, from, &new_from);
     storage::set_balance(env, to, &new_to);
 
-    env.events()
-        .publish((Symbol::new(env, "transfer"), from, to), amount);
+    // Emit standardized transfer event
+    EventEmitter::transfer(env, TransferEvent {
+        from: from.clone(),
+        to: to.clone(),
+        amount,
+        token: env.current_contract_address(),
+        timestamp: env.ledger().timestamp(),
+    });
 
     invoke_transfer_hook(env, from, to, amount);
 }
